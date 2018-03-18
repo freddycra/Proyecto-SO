@@ -10,6 +10,48 @@ int validate_cmd(char*); //correct[1] incorrect[0]
 void add_history(char*); //agrega al historial de comandos
 int excute_cmd(char**);
 void split_cmd(char*, char**);
+int cantidadComandos = 0;
+
+//Metodos de historial
+typedef struct{//Crea el nodo
+  char* comando;
+  struct Nodo * sig;
+}Nodo;
+
+Nodo * primero = NULL;
+Nodo * ultimo = NULL;
+
+void agregar(Nodo * nodo){
+  nodo->sig = NULL;
+  if(primero==NULL){
+    primero = nodo;
+    ultimo = nodo;
+  }else{
+    ultimo-> sig = nodo;
+    ultimo = nodo;
+  }
+}
+
+void history(){
+  int num = 1;
+  Nodo * i = primero;
+  if(cantidadComandos<=10){
+    while(i != NULL){
+      printf("%d :%s\n",num,i->comando);
+      i=i->sig;
+      num++;
+    }
+  }else{
+    int aux = (cantidadComandos - 10);
+    while(i != NULL){
+      if(num>aux){
+        printf("%d :%s\n",num,i->comando);
+      }
+      i=i->sig;
+      num++;
+    }
+  }
+}
 
 int main(int argc, char** argv){
 
@@ -38,14 +80,16 @@ int validate_cmd(char* line){
   return strlen(line)>=1?1:0;
 }
 
-void add_history(char* line){
-  //TODO lista
-
+void add_history(char * line){
+  Nodo * nuevoNodo = malloc(sizeof(Nodo));
+  nuevoNodo->comando = line;
+  agregar(nuevoNodo);
+  cantidadComandos++;
 }
 
 void split_cmd(char* line, char** split_buffer){
   int i=1;
-  char* n = split_buffer[0] = strtok(line, " ");
+  char* n = split_buffer[0] = strtok(line, " ");//mete el comando
   while(n!=NULL){
     split_buffer[i++] = n = strtok(NULL, " ");
   }
@@ -54,7 +98,13 @@ void split_cmd(char* line, char** split_buffer){
 int excute_cmd(char** line){
   pid_t pid = fork();
   if(pid == 0){
+    add_history(line[0]);
+    printf("%s\n",line[0]);
     execvp(line[0],line);
+    if(strcmp(line[0],"history")==0){
+      history();
+      exit(0);
+    }
   }else{
     wait(NULL);
     printf("Exitoso\n");
