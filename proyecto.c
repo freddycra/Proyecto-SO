@@ -10,46 +10,48 @@ int validate_cmd(char*); //correct[1] incorrect[0]
 void add_history(char*); //agrega al historial de comandos
 int excute_cmd(char**);
 void split_cmd(char*, char**);
-int cantidadComandos = 0;
 
-//Metodos de historial
-typedef struct{//Crea el nodo
-  char* comando;
+
+int numero = 10;
+
+//Metodos de lista
+struct Nodo{//Crea el nodo
+  char comando[30];
+  int n;
   struct Nodo * sig;
-}Nodo;
+  struct Nodo * ant;
+};
 
-Nodo * primero = NULL;
-Nodo * ultimo = NULL;
+struct Nodo * primero;
+struct Nodo * ultimo;
 
-void agregar(Nodo * nodo){
-  nodo->sig = NULL;
-  if(primero==NULL){
-    primero = nodo;
-    ultimo = nodo;
+struct Nodo * creaNodo(char * x){
+  struct Nodo * nuevoNodo = (struct Nodo*)malloc(sizeof(struct Nodo));
+  strcpy(nuevoNodo->comando, x);
+  nuevoNodo->n = numero--;
+  nuevoNodo->ant = NULL;
+  nuevoNodo->sig = NULL;
+  return nuevoNodo;
+}
+void agregar(char * x){
+  struct Nodo * nuevoNodo = creaNodo(x);
+  if(primero == NULL){
+    primero = nuevoNodo;
+    ultimo = nuevoNodo;
+    return;
   }else{
-    ultimo-> sig = nodo;
-    ultimo = nodo;
+    ultimo->sig = nuevoNodo;
+    nuevoNodo->ant = ultimo;
+    ultimo = nuevoNodo;
   }
 }
-
-void history(){
-  int num = 1;
-  Nodo * i = primero;
-  if(cantidadComandos<=10){
-    while(i != NULL){
-      printf("%d :%s\n",num,i->comando);
-      i=i->sig;
-      num++;
-    }
-  }else{
-    int aux = (cantidadComandos - 10);
-    while(i != NULL){
-      if(num>aux){
-        printf("%d :%s\n",num,i->comando);
-      }
-      i=i->sig;
-      num++;
-    }
+void mostrar(){
+  struct Nodo * temp = ultimo;
+  int can;
+  for(can=1;temp!= NULL&&can<11;can++){
+    //printf("[%d] :%s\n",can,temp->comando);
+    printf("[%d] :%s\n",temp->n, temp->comando);
+    temp=temp->ant;
   }
 }
 
@@ -65,6 +67,7 @@ int main(int argc, char** argv){
       buffer[strcspn(buffer, "\n")] = '\0'; //remplaza el salto de linea de la cadena
       if(validate_cmd(buffer)){
         split_cmd(buffer, split_buffer);
+        agregar(split_buffer[0]);
         excute_cmd(split_buffer);
       }
     }
@@ -80,12 +83,6 @@ int validate_cmd(char* line){
   return strlen(line)>=1?1:0;
 }
 
-void add_history(char * line){
-  Nodo * nuevoNodo = malloc(sizeof(Nodo));
-  nuevoNodo->comando = line;
-  agregar(nuevoNodo);
-  cantidadComandos++;
-}
 
 void split_cmd(char* line, char** split_buffer){
   int i=1;
@@ -98,13 +95,12 @@ void split_cmd(char* line, char** split_buffer){
 int excute_cmd(char** line){
   pid_t pid = fork();
   if(pid == 0){
-    add_history(line[0]);
     printf("%s\n",line[0]);
-    execvp(line[0],line);
     if(strcmp(line[0],"history")==0){
-      history();
-      exit(0);
+      mostrar();
+      return;
     }
+    execvp(line[0],line);
   }else{
     wait(NULL);
     printf("Exitoso\n");
