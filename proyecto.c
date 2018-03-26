@@ -10,14 +10,14 @@
 int validate_cmd(char*); //correct[1] incorrect[0]
 void add_history(char*); //agrega al historial de comandos
 void excute_cmd(char**);
-void split_cmd(char*, char**);
-void extraer(char**);
+int split_cmd(char*, char**);
+void extraer(char*);
 int run = 1;
 int cantidad = 0;
 
 //Metodos de lista
 struct Nodo{//Crea el nodo
-  char comando[30];
+  char comando[MAX_LEN];
   int posicion;
   struct Nodo * sig;
   struct Nodo * ant;
@@ -59,14 +59,24 @@ int main(int argc, char** argv){
 
   char* buffer = malloc(sizeof(char));
   char** split_buffer = (char**)malloc(5*sizeof(char*));
-  while(run==1){
+  int size, i, flag;
 
+  while(run==1){
+    flag=1;
     printf("$prompt>>> ");
     if(fgets(buffer, MAX_LEN, stdin)!=NULL){ //Lee una linea de consola
       buffer[strcspn(buffer, "\n")] = '\0'; //remplaza el salto de linea de la cadena
       if(validate_cmd(buffer)){
-        split_cmd(buffer, split_buffer);
-        extraer(split_buffer);
+        size = split_cmd(buffer, split_buffer);
+        for(i=0;buffer[i] && flag==1;i++){
+          printf("Leyendo: %c\n", buffer[i]);
+          if(!isdigit(buffer[i]) && buffer[i]!='!')flag=0;
+        }
+        if(flag){
+          printf("Es lo que buscabamos Houston\n");
+          extraer(buffer);
+          continue;
+        }
         excute_cmd(split_buffer);
       }
     }
@@ -77,18 +87,18 @@ int main(int argc, char** argv){
   return 0;
 }
 
-int validate_cmd(char* line){
-  //Verifica que la linea no este vacia
+int validate_cmd(char* line){//Verifica que la linea no este vacia
   return strlen(line)>=1?1:0;
 }
 
 
-void split_cmd(char* line, char** split_buffer){
+int split_cmd(char* line, char** split_buffer){
   int i=1;
   char* n = split_buffer[0] = strtok(line, " ");//mete el comando
   while(n!=NULL){
     split_buffer[i++] = n = strtok(NULL, " ");
   }
+  return i;
 }
 
 void excute_cmd(char** line){
@@ -96,36 +106,26 @@ void excute_cmd(char** line){
   pid_t pid;
   agregar(line[0]);
   pid = fork();
-  //printf("%s\n", line[0]);
   if(pid == 0){
     if(strcmp(line[0],"history")==0){
       mostrar();
     }
-    if(strcmp(line[0],"exit")==0){
-      strcpy(line[0], '^C');
-      printf("Adios!\n");
-    }
     execvp(line[0],line);
+    exit(0);
   }else{
     wait(NULL);
-    printf("Exitoso\n");
   }
 }
 
-void extraer(char** line){
-  printf("%d\n",line);
-  int num = atoi(&line[1]);
-  printf("%d\n",line[1]);
-  printf("%d\n",num);
-  if(strcmp(line[0],"!")==0){printf("llego1\n");
-    if(num>0&&num<=cantidad){printf("llego2\n");
-      struct Nodo * temp;
-      for(temp=ultimo;temp!= NULL;temp=temp->ant){
-        if(temp->posicion==num){
-          strcpy(line[0],temp->comando);printf("llego3\n");
-        }
+void extraer(char* line){
+  int num = atoi(strtok(line, "!"));
+  printf("Entramos buffer: %s I: %d\n", line, num);
+  if(num<=cantidad){
+    /*struct Nodo * temp;
+    for(temp=ultimo;temp!= NULL;temp=temp->ant){
+      if(temp->posicion==num){
+        strcpy(line[0],temp->comando);
       }
-
-    }
+    }*/
   }
 }
