@@ -6,7 +6,7 @@
 #include <sys/wait.h>
 #include <ctype.h>
 #define MAX_LEN 100
-#define CMD_LEN 4
+#define CMD_LEN 10
 
 typedef struct Nodo{//Crea el nodo
   char* comando;
