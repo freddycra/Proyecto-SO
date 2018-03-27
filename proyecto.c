@@ -6,7 +6,7 @@
 #include <sys/wait.h>
 #include <ctype.h>
 #define MAX_LEN 100
-#define CMD_LEN 4
+#define CMD_LEN 10
 
 typedef struct Nodo{//Crea el nodo
   char* comando;
@@ -20,7 +20,7 @@ typedef struct{
 }Lista;
 
 int validate_cmd(char*); //correct[1] incorrect[0]
-int excute_cmd(char**);
+int excute_cmd(char**, int);
 int split_cmd(char*, char**);
 void extraer(char*, Lista*);
 
@@ -59,7 +59,7 @@ void history(Lista* list){
 
 int main(int argc, char** argv){
 
-  int run=1, i, flag=1;
+  int run=1, i, flag=1, size;
   Lista* list = malloc(sizeof(Lista));
   lista_init(list);
   char* buffer = malloc(sizeof(char));
@@ -72,7 +72,7 @@ int main(int argc, char** argv){
       buffer[strcspn(buffer, "\n")] = '\0'; //remplaza el salto de linea de la cadena
       if(validate_cmd(buffer)){
         agregar(buffer, list);
-        split_cmd(buffer, split_buffer);
+        size = split_cmd(buffer, split_buffer);
         if(strcmp(split_buffer[0],"history")==0){
           history(list);
           continue;
@@ -83,7 +83,7 @@ int main(int argc, char** argv){
           extraer(buffer, list);
           continue;
         }
-        excute_cmd(split_buffer);
+        excute_cmd(split_buffer, size);
       }
     }
 
@@ -107,7 +107,7 @@ int split_cmd(char* line, char** split_buffer){
   return i;
 }
 
-int excute_cmd(char** line){
+int excute_cmd(char** line, int size){
   pid_t pid = fork();
   if(pid == 0){
     execvp(line[0],line);
