@@ -23,6 +23,7 @@ int validate_cmd(char*); //correct[1] incorrect[0]
 int excute_cmd(char**, int);
 int split_cmd(char*, char**);
 void extraer(char*, Lista*);
+int background(char*);
 
 //Metodos de historial
 void lista_init(Lista* list){
@@ -72,7 +73,8 @@ int main(int argc, char** argv){
       buffer[strcspn(buffer, "\n")] = '\0'; //remplaza el salto de linea de la cadena
       if(validate_cmd(buffer)){
         agregar(buffer, list);
-        size = split_cmd(buffer, split_buffer);
+        size=background(buffer);
+        split_cmd(buffer, split_buffer);
         if(strcmp(split_buffer[0],"history")==0){
           history(list);
           continue;
@@ -113,7 +115,8 @@ int excute_cmd(char** line, int size){
     execvp(line[0],line);
     exit(0);
   }else{
-    wait(NULL);
+    if(size==0)
+      wait(NULL);
   }
 }
 
@@ -130,4 +133,14 @@ void extraer(char* line, Lista* list){
       printf("%s\n", temp->comando);
     }
   }
+}
+
+int background(char* line){
+  int i=0;
+  for(i;line[i]!='\0';i++){}
+  if(line[i-1]=='&'){
+    line[strcspn(line, "&")] = '\0';
+    return i;
+  }else
+    return 0;
 }
